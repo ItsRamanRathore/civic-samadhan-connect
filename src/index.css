@@ -145,6 +145,15 @@
   .shadow-feature {
     box-shadow: var(--shadow-feature);
   }
+  
+  /* Custom Transition Utilities */
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
 }
 
 @layer components {
