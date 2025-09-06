@@ -47,6 +47,21 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Civic Care Theme Colors
+        "civic-blue": {
+          DEFAULT: "hsl(var(--civic-blue))",
+          light: "hsl(var(--civic-blue-light))",
+          dark: "hsl(var(--civic-blue-dark))",
+        },
+        "civic-green": {
+          DEFAULT: "hsl(var(--civic-green))",
+          light: "hsl(var(--civic-green-light))",
+          dark: "hsl(var(--civic-green-dark))",
+        },
+        "civic-gray": {
+          DEFAULT: "hsl(var(--civic-gray))",
+          dark: "hsl(var(--civic-gray-dark))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
