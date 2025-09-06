@@ -154,6 +154,19 @@
   .transition-bounce {
     transition: var(--transition-bounce);
   }
+  
+  /* Custom Gradient Utilities */
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .bg-gradient-feature {
+    background: var(--gradient-feature);
+  }
 }
 
 @layer components {
