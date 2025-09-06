@@ -132,6 +132,21 @@
   }
 }
 
+@layer utilities {
+  /* Custom Shadow Utilities */
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  
+  .shadow-feature {
+    box-shadow: var(--shadow-feature);
+  }
+}
+
 @layer components {
   /* Hero Button Variants */
   .btn-hero-primary {
