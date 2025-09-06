@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-civic-care.jpg";
 
 const Hero = () => {
@@ -23,12 +24,16 @@ const Hero = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button className="btn-hero-primary">
-                Report an Issue
-              </Button>
-              <Button className="btn-hero-secondary">
-                Admin Login
-              </Button>
+              <Link to="/auth">
+                <Button className="btn-hero-primary">
+                  Get Started
+                </Button>
+              </Link>
+              <Link to="/track-complaint">
+                <Button className="btn-hero-secondary">
+                  Track Complaint
+                </Button>
+              </Link>
             </div>
             
             <div className="flex items-center gap-6 pt-8 text-white/70">
