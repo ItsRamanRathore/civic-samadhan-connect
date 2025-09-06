@@ -192,7 +192,7 @@
   /* Step Cards */
   .step-card {
     @apply bg-gradient-feature rounded-xl p-6 border border-border shadow-soft 
-           hover:shadow-card transition-smooth group;
+           hover:shadow-card transition-smooth;
   }
   
   /* Icon Containers */
