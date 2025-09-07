@@ -33,7 +33,7 @@ interface Complaint {
 }
 
 export default function Dashboard() {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [complaints, setComplaints] = useState<Complaint[]>([]);
@@ -44,8 +44,13 @@ export default function Dashboard() {
       navigate('/auth');
       return;
     }
+    // Redirect admins to admin dashboard
+    if (isAdmin) {
+      navigate('/admin');
+      return;
+    }
     fetchComplaints();
-  }, [user, navigate]);
+  }, [user, isAdmin, navigate]);
 
   const fetchComplaints = async () => {
     try {

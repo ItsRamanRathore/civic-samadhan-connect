@@ -34,6 +34,11 @@ const Hero = () => {
                   Track Complaint
                 </Button>
               </Link>
+              <Link to="/auth">
+                <Button variant="ghost" className="text-white hover:bg-white/10 border border-white/20">
+                  Admin Login
+                </Button>
+              </Link>
             </div>
             
             <div className="flex items-center gap-6 pt-8 text-white/70">

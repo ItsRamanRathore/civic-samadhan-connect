@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       admin_users: {
         Row: {
+          department: string | null
           granted_at: string | null
           granted_by: string | null
           id: string
@@ -23,6 +24,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          department?: string | null
           granted_at?: string | null
           granted_by?: string | null
           id?: string
@@ -30,6 +32,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          department?: string | null
           granted_at?: string | null
           granted_by?: string | null
           id?: string
@@ -57,6 +60,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
+          department: string | null
           description: string | null
           id: string
           name: string
@@ -64,6 +68,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string | null
+          department?: string | null
           description?: string | null
           id?: string
           name: string
@@ -71,6 +76,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string | null
+          department?: string | null
           description?: string | null
           id?: string
           name?: string
