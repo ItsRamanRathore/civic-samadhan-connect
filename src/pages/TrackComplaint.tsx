@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,26 +43,19 @@ interface ComplaintDetails {
 }
 
 export default function TrackComplaint() {
-  const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   const [complaintId, setComplaintId] = useState('');
+  const [email, setEmail] = useState('');
   const [complaint, setComplaint] = useState<ComplaintDetails | null>(null);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    }
-  }, [user, navigate]);
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!complaintId.trim()) {
+    if (!complaintId.trim() || !email.trim()) {
       toast({
-        title: "Please enter a complaint ID",
+        title: "Please enter both complaint ID and email",
         variant: "destructive"
       });
       return;
@@ -88,6 +80,17 @@ export default function TrackComplaint() {
         `)
         .eq('id', complaintId.toLowerCase())
         .single();
+
+      // Verify the email matches the complaint
+      if (data && data.profiles?.email !== email.toLowerCase()) {
+        toast({
+          title: "Email mismatch",
+          description: "The email provided doesn't match the complaint records",
+          variant: "destructive"
+        });
+        setComplaint(null);
+        return;
+      }
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -167,9 +170,9 @@ export default function TrackComplaint() {
       <header className="bg-card border-b shadow-soft">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center space-x-4">
-            <Link to="/dashboard" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
+            <Link to="/" className="flex items-center space-x-2 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Dashboard</span>
+              <span>Back to Home</span>
             </Link>
             <div className="h-4 w-px bg-border"></div>
             <Link to="/" className="flex items-center space-x-2">
@@ -186,7 +189,7 @@ export default function TrackComplaint() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Track Complaint</h1>
             <p className="text-muted-foreground">
-              Enter your complaint ID to check the current status
+              Enter your complaint ID and email address to check the current status
             </p>
           </div>
 
@@ -195,34 +198,43 @@ export default function TrackComplaint() {
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Search className="w-5 h-5 text-primary" />
-                <span>Search by Complaint ID</span>
+                <span>Search by Complaint ID & Email</span>
               </CardTitle>
               <CardDescription>
-                Enter the complaint ID you received when filing your complaint
+                Enter the complaint ID and your email address to track your complaint
               </CardDescription>
             </CardHeader>
             
             <CardContent>
               <form onSubmit={handleSearch} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="complaintId">Complaint ID</Label>
-                  <div className="flex space-x-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="complaintId">Complaint ID</Label>
                     <Input
                       id="complaintId"
                       placeholder="Enter complaint ID..."
                       value={complaintId}
                       onChange={(e) => setComplaintId(e.target.value)}
-                      className="flex-1"
                     />
-                    <Button 
-                      type="submit" 
-                      className="btn-hero-primary"
-                      disabled={loading}
-                    >
-                      {loading ? 'Searching...' : 'Search'}
-                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email..."
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                 </div>
+                <Button 
+                  type="submit" 
+                  className="btn-hero-primary w-full"
+                  disabled={loading}
+                >
+                  {loading ? 'Searching...' : 'Track Complaint'}
+                </Button>
               </form>
             </CardContent>
           </Card>
