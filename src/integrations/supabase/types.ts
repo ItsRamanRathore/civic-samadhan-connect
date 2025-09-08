@@ -16,6 +16,9 @@ export type Database = {
     Tables: {
       admin_users: {
         Row: {
+          approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
           department: string | null
           granted_at: string | null
           granted_by: string | null
@@ -24,6 +27,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           department?: string | null
           granted_at?: string | null
           granted_by?: string | null
@@ -32,6 +38,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           department?: string | null
           granted_at?: string | null
           granted_by?: string | null
@@ -187,7 +196,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_master_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
