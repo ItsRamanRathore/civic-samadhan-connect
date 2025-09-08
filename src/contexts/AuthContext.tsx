@@ -6,6 +6,7 @@ interface AdminUser {
   id: string;
   role: string;
   department: string;
+  approved: boolean;
 }
 
 interface AuthContextType {
@@ -13,6 +14,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  isMasterAdmin: boolean;
   adminUser: AdminUser | null;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
@@ -26,18 +28,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMasterAdmin, setIsMasterAdmin] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = async (userId: string, userEmail: string) => {
     try {
+      // Check if user is master admin first
+      const masterAdmin = userEmail === 'ramanrathore031204@gmail.com';
+      setIsMasterAdmin(masterAdmin);
+      
+      if (masterAdmin) {
+        // Master admin always has access
+        setIsAdmin(true);
+        setAdminUser({
+          id: userId,
+          role: 'master_admin',
+          department: 'all',
+          approved: true
+        });
+        return;
+      }
+
       const { data, error } = await supabase
         .from('admin_users')
-        .select('id, role, department')
+        .select('id, role, department, approved')
         .eq('user_id', userId)
-        .single();
+        .eq('approved', true)
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+      if (error) {
         console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+        setAdminUser(null);
         return;
       }
       
@@ -65,10 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           // Check admin status after setting user
           setTimeout(() => {
-            checkAdminStatus(session.user.id);
+            checkAdminStatus(session.user.id, session.user.email || '');
           }, 0);
         } else {
           setIsAdmin(false);
+          setIsMasterAdmin(false);
           setAdminUser(null);
         }
         setLoading(false);
@@ -81,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        checkAdminStatus(session.user.id);
+        checkAdminStatus(session.user.id, session.user.email || '');
       }
       setLoading(false);
     });
@@ -122,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     isAdmin,
+    isMasterAdmin,
     adminUser,
     signUp,
     signIn,

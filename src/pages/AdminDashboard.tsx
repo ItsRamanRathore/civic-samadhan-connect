@@ -47,7 +47,7 @@ interface Complaint {
 }
 
 export default function AdminDashboard() {
-  const { user, isAdmin, adminUser, signOut } = useAuth();
+  const { user, isAdmin, isMasterAdmin, adminUser, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -89,8 +89,8 @@ export default function AdminDashboard() {
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by department if admin is not super admin
-      if (adminUser?.role !== 'admin' && adminUser?.department !== 'general') {
+      // Filter by department if admin is not master admin
+      if (!isMasterAdmin && adminUser?.department !== 'all' && adminUser?.department !== 'general') {
         query = query.eq('categories.department', adminUser.department);
       }
 
@@ -224,14 +224,14 @@ export default function AdminDashboard() {
                 <Shield className="w-5 h-5 text-primary" />
                 <span className="font-semibold">Admin Dashboard</span>
                 <Badge variant="secondary" className="bg-primary text-primary-foreground">
-                  {adminUser?.department?.replace('_', ' ').toUpperCase() || 'ADMIN'}
+                  {isMasterAdmin ? 'MASTER ADMIN' : adminUser?.department?.replace('_', ' ').toUpperCase() || 'ADMIN'}
                 </Badge>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                {user?.user_metadata?.full_name || user?.email} ({adminUser?.role})
+                {user?.user_metadata?.full_name || user?.email} ({isMasterAdmin ? 'Master Admin' : adminUser?.role})
               </span>
               <Button 
                 variant="outline" 
