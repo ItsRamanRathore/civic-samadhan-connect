@@ -4,11 +4,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import AllComplaintsTable from '@/components/AllComplaintsTable';
 import { 
   Shield,
   FileText, 
@@ -17,6 +19,7 @@ import {
   AlertCircle,
   LogOut,
   Home,
+  List,
   MapPin,
   User,
   Edit3,
@@ -130,6 +133,9 @@ export default function AdminDashboard() {
 
   const saveChanges = async (complaintId: string) => {
     try {
+      const complaint = complaints.find(c => c.id === complaintId);
+      const oldStatus = complaint?.status;
+
       const { error } = await supabase
         .from('complaints')
         .update({
@@ -142,9 +148,29 @@ export default function AdminDashboard() {
 
       if (error) throw error;
 
+      // Send email notification if status changed
+      if (complaint && oldStatus !== editForm.status && complaint.profiles?.email) {
+        try {
+          await supabase.functions.invoke('send-complaint-update', {
+            body: {
+              userEmail: complaint.profiles.email,
+              userName: complaint.profiles.full_name || 'User',
+              complaintId: complaintId,
+              complaintTitle: complaint.title,
+              oldStatus: oldStatus,
+              newStatus: editForm.status,
+              adminNotes: editForm.admin_notes || undefined
+            }
+          });
+        } catch (emailError) {
+          console.error('Error sending email notification:', emailError);
+          // Continue with success even if email fails
+        }
+      }
+
       toast({
         title: "Complaint updated successfully",
-        description: "The complaint status has been updated"
+        description: "The complaint status has been updated and the user has been notified"
       });
 
       setEditingComplaint(null);
@@ -317,168 +343,249 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        {/* Complaints List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Complaints Management</CardTitle>
-            <CardDescription>
-              Review and manage complaints submitted by citizens
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {complaints.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No complaints found</h3>
-                <p className="text-muted-foreground">
-                  No complaints have been filed in your department yet
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {complaints.map((complaint) => (
-                  <div key={complaint.id} className="border rounded-lg p-6 hover:shadow-soft transition-shadow">
-                    <div className="flex flex-col space-y-4">
-                      {/* Header */}
-                      <div className="flex flex-col md:flex-row md:items-start justify-between space-y-2 md:space-y-0">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-semibold text-foreground">{complaint.title}</h3>
-                            {complaint.categories && (
-                              <Badge 
-                                variant="secondary"
-                                style={{ backgroundColor: complaint.categories.color }}
-                                className="text-white"
-                              >
-                                {complaint.categories.name}
+        {/* Complaints Management with Tabs */}
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <FileText className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="all-complaints" className="flex items-center space-x-2">
+              <List className="w-4 h-4" />
+              <span>All Complaints</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Complaints</CardTitle>
+                <CardDescription>
+                  Latest complaints in your department
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {complaints.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No complaints found</h3>
+                    <p className="text-muted-foreground">
+                      No complaints have been filed in your department yet
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {complaints.slice(0, 5).map((complaint) => (
+                      <div key={complaint.id} className="border rounded-lg p-6 hover:shadow-soft transition-shadow">
+                        <div className="flex flex-col space-y-4">
+                          {/* Header */}
+                          <div className="flex flex-col md:flex-row md:items-start justify-between space-y-2 md:space-y-0">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <h3 className="font-semibold text-foreground">{complaint.title}</h3>
+                                {complaint.categories && (
+                                  <Badge 
+                                    variant="secondary"
+                                    style={{ backgroundColor: complaint.categories.color }}
+                                    className="text-white"
+                                  >
+                                    {complaint.categories.name}
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
+                                <div className="flex items-center space-x-1">
+                                  <User className="w-3 h-3" />
+                                  <span>{complaint.profiles?.full_name || complaint.profiles?.email}</span>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>{complaint.location}</span>
+                                </div>
+                                <span>
+                                  {new Date(complaint.created_at).toLocaleDateString()}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
+                              <Badge className={getSeverityColor(complaint.severity)}>
+                                {complaint.severity.toUpperCase()}
                               </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-2">
-                            <div className="flex items-center space-x-1">
-                              <User className="w-3 h-3" />
-                              <span>{complaint.profiles?.full_name || complaint.profiles?.email}</span>
+                              
+                              <Badge className={`${getStatusColor(complaint.status)} flex items-center space-x-1`}>
+                                {getStatusIcon(complaint.status)}
+                                <span>{complaint.status.replace('_', ' ').toUpperCase()}</span>
+                              </Badge>
                             </div>
-                            <div className="flex items-center space-x-1">
-                              <MapPin className="w-3 h-3" />
-                              <span>{complaint.location}</span>
-                            </div>
-                            <span>
-                              {new Date(complaint.created_at).toLocaleDateString()}
-                            </span>
                           </div>
-                        </div>
-                        
-                        <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
-                          <Badge className={getSeverityColor(complaint.severity)}>
-                            {complaint.severity.toUpperCase()}
-                          </Badge>
-                          
-                          <Badge className={`${getStatusColor(complaint.status)} flex items-center space-x-1`}>
-                            {getStatusIcon(complaint.status)}
-                            <span>{complaint.status.replace('_', ' ').toUpperCase()}</span>
-                          </Badge>
+
+                          {/* Description */}
+                          <p className="text-sm text-muted-foreground">
+                            {complaint.description}
+                          </p>
+
+                          {/* Image */}
+                          {complaint.image_url && (
+                            <div>
+                              <img 
+                                src={complaint.image_url} 
+                                alt="Complaint evidence" 
+                                className="max-w-sm h-48 object-cover rounded-lg"
+                              />
+                            </div>
+                          )}
+
+                          {/* Admin Actions */}
+                          {editingComplaint === complaint.id ? (
+                            <div className="bg-muted p-4 rounded-lg space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="status">Status</Label>
+                                  <Select 
+                                    value={editForm.status} 
+                                    onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="submitted">Submitted</SelectItem>
+                                      <SelectItem value="in_progress">In Progress</SelectItem>
+                                      <SelectItem value="resolved">Resolved</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="admin_notes">Admin Notes</Label>
+                                <Textarea
+                                  id="admin_notes"
+                                  placeholder="Add notes about the resolution or current status..."
+                                  value={editForm.admin_notes}
+                                  onChange={(e) => setEditForm(prev => ({ ...prev, admin_notes: e.target.value }))}
+                                  rows={3}
+                                />
+                              </div>
+                              
+                              <div className="flex space-x-2">
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => saveChanges(complaint.id)}
+                                  className="flex items-center space-x-1"
+                                >
+                                  <Save className="w-3 h-3" />
+                                  <span>Save</span>
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={cancelEditing}
+                                  className="flex items-center space-x-1"
+                                >
+                                  <X className="w-3 h-3" />
+                                  <span>Cancel</span>
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between pt-2 border-t">
+                              <div className="flex-1">
+                                {complaint.admin_notes && (
+                                  <div className="text-sm">
+                                    <span className="font-medium text-muted-foreground">Admin Notes: </span>
+                                    <span className="text-foreground">{complaint.admin_notes}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => startEditing(complaint)}
+                                className="flex items-center space-x-1"
+                              >
+                                <Edit3 className="w-3 h-3" />
+                                <span>Edit</span>
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
-
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground">
-                        {complaint.description}
-                      </p>
-
-                      {/* Image */}
-                      {complaint.image_url && (
-                        <div>
-                          <img 
-                            src={complaint.image_url} 
-                            alt="Complaint evidence" 
-                            className="max-w-sm h-48 object-cover rounded-lg"
-                          />
-                        </div>
-                      )}
-
-                      {/* Admin Actions */}
-                      {editingComplaint === complaint.id ? (
-                        <div className="bg-muted p-4 rounded-lg space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="status">Status</Label>
-                              <Select 
-                                value={editForm.status} 
-                                onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="submitted">Submitted</SelectItem>
-                                  <SelectItem value="in_progress">In Progress</SelectItem>
-                                  <SelectItem value="resolved">Resolved</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="admin_notes">Admin Notes</Label>
-                            <Textarea
-                              id="admin_notes"
-                              placeholder="Add notes about the resolution or current status..."
-                              value={editForm.admin_notes}
-                              onChange={(e) => setEditForm(prev => ({ ...prev, admin_notes: e.target.value }))}
-                              rows={3}
-                            />
-                          </div>
-                          
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              onClick={() => saveChanges(complaint.id)}
-                              className="flex items-center space-x-1"
-                            >
-                              <Save className="w-3 h-3" />
-                              <span>Save</span>
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={cancelEditing}
-                              className="flex items-center space-x-1"
-                            >
-                              <X className="w-3 h-3" />
-                              <span>Cancel</span>
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <div className="flex-1">
-                            {complaint.admin_notes && (
-                              <div className="text-sm">
-                                <span className="font-medium text-muted-foreground">Admin Notes: </span>
-                                <span className="text-foreground">{complaint.admin_notes}</span>
-                              </div>
-                            )}
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => startEditing(complaint)}
-                            className="flex items-center space-x-1"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Update Status</span>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+                    ))}
+                    
+                    {complaints.length > 5 && (
+                      <div className="text-center pt-4">
+                        <p className="text-sm text-muted-foreground">
+                          Showing 5 of {complaints.length} complaints. Use the "All Complaints" tab to view more.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="all-complaints" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Complaints</CardTitle>
+                <CardDescription>
+                  Search, filter, and manage all complaints in the system
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AllComplaintsTable 
+                  complaints={complaints} 
+                  onUpdateComplaint={async (complaintId, status, adminNotes) => {
+                    const complaint = complaints.find(c => c.id === complaintId);
+                    const oldStatus = complaint?.status;
+
+                    const { error } = await supabase
+                      .from('complaints')
+                      .update({
+                        status: status,
+                        admin_notes: adminNotes,
+                        updated_at: new Date().toISOString(),
+                        resolved_at: status === 'resolved' ? new Date().toISOString() : null
+                      })
+                      .eq('id', complaintId);
+
+                    if (error) throw error;
+
+                    // Send email notification if status changed
+                    if (complaint && oldStatus !== status && complaint.profiles?.email) {
+                      try {
+                        await supabase.functions.invoke('send-complaint-update', {
+                          body: {
+                            userEmail: complaint.profiles.email,
+                            userName: complaint.profiles.full_name || 'User',
+                            complaintId: complaintId,
+                            complaintTitle: complaint.title,
+                            oldStatus: oldStatus,
+                            newStatus: status,
+                            adminNotes: adminNotes || undefined
+                          }
+                        });
+                      } catch (emailError) {
+                        console.error('Error sending email notification:', emailError);
+                      }
+                    }
+
+                    toast({
+                      title: "Complaint updated successfully",
+                      description: "The complaint status has been updated and the user has been notified"
+                    });
+
+                    fetchComplaints();
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

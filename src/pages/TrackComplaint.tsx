@@ -78,11 +78,31 @@ export default function TrackComplaint() {
             email
           )
         `)
-        .eq('id', complaintId.toLowerCase())
-        .single();
+        .eq('id', complaintId.trim())
+        .maybeSingle();
+
+      if (error) {
+        setComplaint(null);
+        toast({
+          title: "Complaint not found",
+          description: "Please check the complaint ID and try again",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!data) {
+        setComplaint(null);
+        toast({
+          title: "Complaint not found",
+          description: "No complaint found with this ID",
+          variant: "destructive"
+        });
+        return;
+      }
 
       // Verify the email matches the complaint
-      if (data && data.profiles?.email !== email.toLowerCase()) {
+      if (data.profiles?.email !== email.toLowerCase().trim()) {
         toast({
           title: "Email mismatch",
           description: "The email provided doesn't match the complaint records",
@@ -92,24 +112,11 @@ export default function TrackComplaint() {
         return;
       }
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          setComplaint(null);
-          toast({
-            title: "Complaint not found",
-            description: "Please check the ID and try again",
-            variant: "destructive"
-          });
-        } else {
-          throw error;
-        }
-      } else {
-        setComplaint(data);
-        toast({
-          title: "Complaint found",
-          description: "Here are the details"
-        });
-      }
+      setComplaint(data);
+      toast({
+        title: "Complaint found",
+        description: "Here are the details"
+      });
     } catch (error) {
       toast({
         title: "Error searching complaint",
