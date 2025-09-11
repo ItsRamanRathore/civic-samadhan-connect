@@ -260,17 +260,35 @@ export default function Dashboard() {
                   <div key={complaint.id} className="border rounded-lg p-4 hover:shadow-soft transition-shadow">
                     <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
                       <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-semibold text-foreground">{complaint.title}</h3>
-                          {complaint.categories && (
-                            <Badge 
-                              variant="secondary"
-                              style={{ backgroundColor: complaint.categories.color }}
-                              className="text-white"
+                        <div className="flex flex-col space-y-2 mb-2">
+                          <div className="flex items-center space-x-2">
+                            <h3 className="font-semibold text-foreground">{complaint.title}</h3>
+                            {complaint.categories && (
+                              <Badge 
+                                variant="secondary"
+                                style={{ backgroundColor: complaint.categories.color }}
+                                className="text-white"
+                              >
+                                {complaint.categories.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-muted-foreground">ID:</span>
+                            <span 
+                              className="text-xs font-mono text-primary font-medium bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors"
+                              onClick={() => {
+                                navigator.clipboard.writeText(complaint.id.slice(0, 8).toUpperCase());
+                                toast({
+                                  title: "ID copied!",
+                                  description: "Complaint ID copied to clipboard"
+                                });
+                              }}
+                              title="Click to copy ID for tracking"
                             >
-                              {complaint.categories.name}
-                            </Badge>
-                          )}
+                              {complaint.id.slice(0, 8).toUpperCase()}
+                            </span>
+                          </div>
                         </div>
                         
                         <p className="text-sm text-muted-foreground mb-2 line-clamp-2">

@@ -65,21 +65,55 @@ export default function TrackComplaint() {
     setSearched(true);
     
     try {
-      const { data, error } = await supabase
-        .from('complaints')
-        .select(`
-          *,
-          categories:category_id (
-            name,
-            color
-          ),
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
-        .eq('id', complaintId.trim())
-        .maybeSingle();
+      const searchId = complaintId.trim();
+      let data = null;
+      let error = null;
+      
+      // If the input is 8 characters or less, search by partial ID match
+      if (searchId.length <= 8) {
+        const { data: allComplaints, error: searchError } = await supabase
+          .from('complaints')
+          .select(`
+            *,
+            categories:category_id (
+              name,
+              color
+            ),
+            profiles:user_id (
+              full_name,
+              email
+            )
+          `);
+        
+        if (searchError) {
+          error = searchError;
+        } else {
+          const matchingComplaint = allComplaints?.find(complaint => 
+            complaint.id.slice(0, 8).toLowerCase() === searchId.toLowerCase()
+          );
+          data = matchingComplaint || null;
+        }
+      } else {
+        // Search by full ID
+        const result = await supabase
+          .from('complaints')
+          .select(`
+            *,
+            categories:category_id (
+              name,
+              color
+            ),
+            profiles:user_id (
+              full_name,
+              email
+            )
+          `)
+          .eq('id', searchId)
+          .maybeSingle();
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         setComplaint(null);
