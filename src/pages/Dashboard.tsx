@@ -15,8 +15,11 @@ import {
   AlertCircle,
   LogOut,
   Home,
-  MapPin
+  MapPin,
+  Users
 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AllComplaintsPublic from '@/components/AllComplaintsPublic';
 
 interface Complaint {
   id: string;
@@ -234,95 +237,114 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Complaints List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Complaints</CardTitle>
-            <CardDescription>
-              View and track all your submitted complaints
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {complaints.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No complaints yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Start by filing your first complaint to make your community better
-                </p>
-                <Link to="/file-complaint">
-                  <Button className="btn-hero-primary">File Your First Complaint</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {complaints.map((complaint) => (
-                  <div key={complaint.id} className="border rounded-lg p-4 hover:shadow-soft transition-shadow">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
-                      <div className="flex-1">
-                        <div className="flex flex-col space-y-2 mb-2">
-                          <div className="flex items-center space-x-2">
-                            <h3 className="font-semibold text-foreground">{complaint.title}</h3>
-                            {complaint.categories && (
-                              <Badge 
-                                variant="secondary"
-                                style={{ backgroundColor: complaint.categories.color }}
-                                className="text-white"
-                              >
-                                {complaint.categories.name}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-muted-foreground">ID:</span>
-                            <span 
-                              className="text-xs font-mono text-primary font-medium bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors"
-                              onClick={() => {
-                                navigator.clipboard.writeText(complaint.id.slice(0, 8).toUpperCase());
-                                toast({
-                                  title: "ID copied!",
-                                  description: "Complaint ID copied to clipboard"
-                                });
-                              }}
-                              title="Click to copy ID for tracking"
-                            >
-                              {complaint.id.slice(0, 8).toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {complaint.description}
-                        </p>
-                        
-                        <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="w-3 h-3" />
-                            <span>{complaint.location}</span>
-                          </div>
-                          <span>
-                            {new Date(complaint.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
-                        <Badge className={getSeverityColor(complaint.severity)}>
-                          {complaint.severity.toUpperCase()}
-                        </Badge>
-                        
-                        <Badge className={`${getStatusColor(complaint.status)} flex items-center space-x-1`}>
-                          {getStatusIcon(complaint.status)}
-                          <span>{complaint.status.replace('_', ' ').toUpperCase()}</span>
-                        </Badge>
-                      </div>
-                    </div>
+        {/* Complaints Management with Tabs */}
+        <Tabs defaultValue="my-complaints" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="my-complaints" className="flex items-center space-x-2">
+              <FileText className="w-4 h-4" />
+              <span>My Complaints</span>
+            </TabsTrigger>
+            <TabsTrigger value="all-complaints" className="flex items-center space-x-2">
+              <Users className="w-4 h-4" />
+              <span>All Community Complaints</span>
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="my-complaints" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Complaints</CardTitle>
+                <CardDescription>
+                  View and track all your submitted complaints
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {complaints.length === 0 ? (
+                  <div className="text-center py-12">
+                    <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No complaints yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Start by filing your first complaint to make your community better
+                    </p>
+                    <Link to="/file-complaint">
+                      <Button className="btn-hero-primary">File Your First Complaint</Button>
+                    </Link>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {complaints.map((complaint) => (
+                      <div key={complaint.id} className="border rounded-lg p-4 hover:shadow-soft transition-shadow">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between space-y-2 md:space-y-0">
+                          <div className="flex-1">
+                            <div className="flex flex-col space-y-2 mb-2">
+                              <div className="flex items-center space-x-2">
+                                <h3 className="font-semibold text-foreground">{complaint.title}</h3>
+                                {complaint.categories && (
+                                  <Badge 
+                                    variant="secondary"
+                                    style={{ backgroundColor: complaint.categories.color }}
+                                    className="text-white"
+                                  >
+                                    {complaint.categories.name}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs text-muted-foreground">ID:</span>
+                                <span 
+                                  className="text-xs font-mono text-primary font-medium bg-primary/10 px-2 py-1 rounded cursor-pointer hover:bg-primary/20 transition-colors"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(complaint.id.slice(0, 8).toUpperCase());
+                                    toast({
+                                      title: "ID copied!",
+                                      description: "Complaint ID copied to clipboard"
+                                    });
+                                  }}
+                                  title="Click to copy ID for tracking"
+                                >
+                                  {complaint.id.slice(0, 8).toUpperCase()}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                              {complaint.description}
+                            </p>
+                            
+                            <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                              <div className="flex items-center space-x-1">
+                                <MapPin className="w-3 h-3" />
+                                <span>{complaint.location}</span>
+                              </div>
+                              <span>
+                                {new Date(complaint.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
+                            <Badge className={getSeverityColor(complaint.severity)}>
+                              {complaint.severity.toUpperCase()}
+                            </Badge>
+                            
+                            <Badge className={`${getStatusColor(complaint.status)} flex items-center space-x-1`}>
+                              {getStatusIcon(complaint.status)}
+                              <span>{complaint.status.replace('_', ' ').toUpperCase()}</span>
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="all-complaints" className="mt-6">
+            <AllComplaintsPublic />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

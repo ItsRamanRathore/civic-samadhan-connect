@@ -52,6 +52,7 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   const startEditing = (complaint: Complaint) => {
     setEditingComplaint(complaint.id);
@@ -122,9 +123,17 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
 
     const matchesStatus = statusFilter === 'all' || complaint.status === statusFilter;
     const matchesSeverity = severityFilter === 'all' || complaint.severity === severityFilter;
+    const matchesDepartment = departmentFilter === 'all' || 
+                             complaint.categories?.department === departmentFilter;
 
-    return matchesSearch && matchesStatus && matchesSeverity;
+    return matchesSearch && matchesStatus && matchesSeverity && matchesDepartment;
   });
+
+  const uniqueDepartments = Array.from(new Set(
+    complaints
+      .map(c => c.categories?.department)
+      .filter(dept => dept)
+  ));
 
   return (
     <div className="space-y-6">
@@ -144,7 +153,7 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
         
         <div className="flex gap-2">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -156,7 +165,7 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
           </Select>
 
           <Select value={severityFilter} onValueChange={setSeverityFilter}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Severity" />
             </SelectTrigger>
             <SelectContent>
@@ -164,6 +173,20 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
               <SelectItem value="low">Low</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
               <SelectItem value="high">High</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Departments</SelectItem>
+              {uniqueDepartments.map(dept => (
+                <SelectItem key={dept} value={dept!}>
+                  {dept?.replace('_', ' ').toUpperCase()}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -174,7 +197,7 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
         <p className="text-sm text-muted-foreground">
           Showing {filteredComplaints.length} of {complaints.length} complaints
         </p>
-        {(searchTerm || statusFilter !== 'all' || severityFilter !== 'all') && (
+        {(searchTerm || statusFilter !== 'all' || severityFilter !== 'all' || departmentFilter !== 'all') && (
           <Button 
             variant="outline" 
             size="sm"
@@ -182,6 +205,7 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
               setSearchTerm('');
               setStatusFilter('all');
               setSeverityFilter('all');
+              setDepartmentFilter('all');
             }}
           >
             <X className="w-3 h-3 mr-1" />
@@ -195,13 +219,13 @@ export default function AllComplaintsTable({ complaints, onUpdateComplaint }: Al
         <div className="text-center py-12">
           <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">
-            {searchTerm || statusFilter !== 'all' || severityFilter !== 'all' 
+            {searchTerm || statusFilter !== 'all' || severityFilter !== 'all' || departmentFilter !== 'all'
               ? 'No matching complaints found' 
               : 'No complaints found'
             }
           </h3>
           <p className="text-muted-foreground">
-            {searchTerm || statusFilter !== 'all' || severityFilter !== 'all'
+            {searchTerm || statusFilter !== 'all' || severityFilter !== 'all' || departmentFilter !== 'all'
               ? 'Try adjusting your search or filter criteria'
               : 'No complaints have been filed yet'
             }
